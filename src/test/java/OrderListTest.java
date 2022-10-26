@@ -15,9 +15,10 @@ public class OrderListTest {
 
         testGetOrderListAndCheckResponseBody
                 .then()
+                .statusCode(200)
+                .and()
                 .assertThat()
-                .body("orders", notNullValue())
-                .statusCode(200);
+                .body("orders", notNullValue());
     }
 
 }

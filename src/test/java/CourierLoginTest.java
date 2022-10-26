@@ -31,10 +31,10 @@ public class CourierLoginTest {
 
         testOKStatusAndReturnNotNullIdWithCorrectAuth
                 .then()
-                .assertThat()
-                .body("id", notNullValue())
+                .statusCode(200)
                 .and()
-                .statusCode(200);
+                .assertThat()
+                .body("id", notNullValue());
     }
 
     //Тест падает из-за несоответствия требований
@@ -48,10 +48,10 @@ public class CourierLoginTest {
 
         testErrorMessageForAuthWithoutPass
                 .then()
-                .assertThat()
-                .body("message", is("Недостаточно данных для входа"))
+                .statusCode(400)
                 .and()
-                .statusCode(400);
+                .assertThat()
+                .body("message", is("Недостаточно данных для входа"));
     }
 
     @Test
@@ -63,10 +63,10 @@ public class CourierLoginTest {
 
         testErrorMessageForAuthWithoutLogin
                 .then()
-                .assertThat()
-                .body("message", is("Недостаточно данных для входа"))
+                .statusCode(400)
                 .and()
-                .statusCode(400);
+                .assertThat()
+                .body("message", is("Недостаточно данных для входа"));
     }
 
     @Test
@@ -78,10 +78,10 @@ public class CourierLoginTest {
 
         testErrorMessageForLoginNotCreatedCourier
                 .then()
-                .assertThat()
-                .body("message", is("Учетная запись не найдена"))
+                .statusCode(404)
                 .and()
-                .statusCode(404);
+                .assertThat()
+                .body("message", is("Учетная запись не найдена"));
     }
 
     @Test
@@ -93,10 +93,10 @@ public class CourierLoginTest {
 
         testErrorMessageForIncorrectPassword
                 .then()
-                .assertThat()
-                .body("message", is("Учетная запись не найдена"))
+                .statusCode(404)
                 .and()
-                .statusCode(404);
+                .assertThat()
+                .body("message", is("Учетная запись не найдена"));
     }
 
     @After

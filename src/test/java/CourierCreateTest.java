@@ -25,10 +25,10 @@ public class CourierCreateTest {
 
         testOkMessageForCreateCourier
                 .then()
-                .assertThat()
-                .body("ok", is(true))
+                .statusCode(201)
                 .and()
-                .statusCode(201);
+                .assertThat()
+                .body("ok", is(true));
     }
 
     @Test
@@ -40,20 +40,22 @@ public class CourierCreateTest {
 
         createFirstCourier
                 .then()
-                .assertThat()
-                .body("ok", is(true))
+                .statusCode(201)
                 .and()
-                .statusCode(201);
+                .assertThat()
+                .body("ok", is(true));
+
 
         Response testErrorMessageForCreateTwoSameCourier =
                 courierClient.getResponse("create", new CourierClient().getJsonBody("correctCourier"));
 
         testErrorMessageForCreateTwoSameCourier
                 .then()
-                .assertThat()
-                .body("message", is("Этот логин уже используется. Попробуйте другой."))
+                .statusCode(409)
                 .and()
-                .statusCode(409);
+                .assertThat()
+                .body("message", is("Этот логин уже используется. Попробуйте другой."));
+
     }
 
     @Test
@@ -65,10 +67,11 @@ public class CourierCreateTest {
 
         testErrorMessageForCreateCourierWithoutLogin
                 .then()
-                .assertThat()
-                .body("message", is("Недостаточно данных для создания учетной записи"))
+                .statusCode(400)
                 .and()
-                .statusCode(400);
+                .assertThat()
+                .body("message", is("Недостаточно данных для создания учетной записи"));
+
     }
 
     @Test
@@ -80,10 +83,11 @@ public class CourierCreateTest {
 
         testErrorMessageForCreateCourierWithoutPass
                 .then()
-                .assertThat()
-                .body("message", is("Недостаточно данных для создания учетной записи"))
+                .statusCode(400)
                 .and()
-                .statusCode(400);
+                .assertThat()
+                .body("message", is("Недостаточно данных для создания учетной записи"));
+
     }
 
     @After

@@ -70,10 +70,10 @@ public class OrderCreateTest {
 
         testOrderCreateWithParameters
                 .then()
-                .assertThat()
-                .body("track", notNullValue())
+                .statusCode(expected)
                 .and()
-                .statusCode(expected);
+                .assertThat()
+                .body("track", notNullValue());
     }
 
 }
