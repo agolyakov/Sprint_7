@@ -1,13 +1,10 @@
-import io.restassured.RestAssured;
-import io.restassured.path.json.JsonPath;
+import api.client.CourierClient;
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.Response;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-
-import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 
 //курьер может авторизоваться;
@@ -20,101 +17,92 @@ import static org.hamcrest.Matchers.*;
 public class CourierLoginTest {
 
     @Before
-    public void setUp() {
-        RestAssured.baseURI = "https://qa-scooter.praktikum-services.ru/";
-
-        File json = new File("src/test/resources/courier.json");
-        given()
-                .header("Content-Type", "application/json")
-                .and()
-                .body(json)
-                .when()
-                .post("/api/v1/courier");
+    public void createCourier() {
+        CourierClient courierClient = new CourierClient();
+        courierClient.getResponse("create", new CourierClient().getJsonBody("correctCourier"));
     }
 
     @Test
-    public void authWithAllParams() {
-        File json = new File("src/test/resources/courier.json");
-        Response response = given()
-                .header("Content-Type", "application/json")
+    @DisplayName("Check isNotNull id with correct login")
+    public void testOKStatusAndReturnNotNullIdWithCorrectAuth() {
+        CourierClient courierClient = new CourierClient();
+        Response testOKStatusAndReturnNotNullIdWithCorrectAuth =
+                courierClient.getResponse("login", new CourierClient().getJsonBody("correctCourier"));
+
+        testOKStatusAndReturnNotNullIdWithCorrectAuth
+                .then()
+                .assertThat()
+                .body("id", notNullValue())
                 .and()
-                .body(json)
-                .when()
-                .post("/api/v1/courier/login");
-        response.then().assertThat().body("id", notNullValue()).statusCode(200);
+                .statusCode(200);
     }
 
     //Тест падает из-за несоответствия требований
     //При отсутствии в запросе поля password сервис возвращает 504 ошибку вместо ожидаемой 400
     @Test
-    public void authWithoutPass() {
-        File json = new File("src/test/resources/courierWithoutPass.json");
-        Response response = given()
-                .header("Content-Type", "application/json")
+    @DisplayName("Check error message with login without variable 'password'")
+    public void testErrorMessageForAuthWithoutPass() {
+        CourierClient courierClient = new CourierClient();
+        Response testErrorMessageForAuthWithoutPass =
+                courierClient.getResponse("login", new CourierClient().getJsonBody("noPass"));
+
+        testErrorMessageForAuthWithoutPass
+                .then()
+                .assertThat()
+                .body("message", is("Недостаточно данных для входа"))
                 .and()
-                .body(json)
-                .when()
-                .post("/api/v1/courier/login");
-        response.then().assertThat().body("message", equalTo("Недостаточно данных для входа")).statusCode(400);
+                .statusCode(400);
     }
 
     @Test
-    public void authWithoutLogin() {
-        File json = new File("src/test/resources/courierWithoutLogin.json");
-        Response response = given()
-                .header("Content-Type", "application/json")
+    @DisplayName("Check error message with login without variable 'login'")
+    public void testErrorMessageForAuthWithoutLogin() {
+        CourierClient courierClient = new CourierClient();
+        Response testErrorMessageForAuthWithoutLogin =
+                courierClient.getResponse("login", new CourierClient().getJsonBody("noLogin"));
+
+        testErrorMessageForAuthWithoutLogin
+                .then()
+                .assertThat()
+                .body("message", is("Недостаточно данных для входа"))
                 .and()
-                .body(json)
-                .when()
-                .post("/api/v1/courier/login");
-        response.then().assertThat().body("message", equalTo("Недостаточно данных для входа")).statusCode(400);
+                .statusCode(400);
     }
 
     @Test
-    public void authNoCreatedCourier() {
-        File json = new File("src/test/resources/courierNoCreated.json");
-        Response response = given()
-                .header("Content-Type", "application/json")
+    @DisplayName("Check error message with login not created courier")
+    public void testErrorMessageForAuthNotCreatedCourier() {
+        CourierClient courierClient = new CourierClient();
+        Response testErrorMessageForLoginNotCreatedCourier =
+                courierClient.getResponse("login", new CourierClient().getJsonBody("notCreated"));
+
+        testErrorMessageForLoginNotCreatedCourier
+                .then()
+                .assertThat()
+                .body("message", is("Учетная запись не найдена"))
                 .and()
-                .body(json)
-                .when()
-                .post("/api/v1/courier/login");
-        response.then().assertThat().body("message", equalTo("Учетная запись не найдена")).statusCode(404);
+                .statusCode(404);
     }
 
     @Test
-    public void authWithBadPass() {
-        File json = new File("src/test/resources/courierWithBadPass.json");
-        Response response = given()
-                .header("Content-Type", "application/json")
+    @DisplayName("Check error message for incorrect password")
+    public void testErrorMessageForIncorrectPassword() {
+        CourierClient courierClient = new CourierClient();
+        Response testErrorMessageForIncorrectPassword =
+                courierClient.getResponse("login", new CourierClient().getJsonBody("incorrectPass"));
+
+        testErrorMessageForIncorrectPassword
+                .then()
+                .assertThat()
+                .body("message", is("Учетная запись не найдена"))
                 .and()
-                .body(json)
-                .when()
-                .post("/api/v1/courier/login");
-        response.then().assertThat().body("message", equalTo("Учетная запись не найдена")).statusCode(404);
+                .statusCode(404);
     }
 
     @After
-    public void getCourierIdAndDeleteCourier() {
-        File json = new File("src/test/resources/courier.json");
-        Response response = given()
-                .header("Content-Type", "application/json")
-                .and()
-                .body(json)
-                .when()
-                .post("/api/v1/courier/login");
-
-        if (response.getStatusCode() == 200) {
-            JsonPath jsonPath = new JsonPath(response.body().asString());
-            int id = jsonPath.get("id");
-
-            given()
-                    .header("Content-Type", "application/json")
-                    .and()
-                    .body(response.body().asString())
-                    .when()
-                    .delete("/api/v1/courier/" + id);
-        }
+    public void deleteCourierIfIdIsNotNull() {
+        CourierClient courierClient = new CourierClient();
+        courierClient.deleteCourierIfIdIsNotNull();
     }
 
 }

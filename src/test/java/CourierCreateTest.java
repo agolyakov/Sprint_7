@@ -1,13 +1,9 @@
-import io.restassured.RestAssured;
-import io.restassured.path.json.JsonPath;
+import api.client.CourierClient;
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.Response;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-
-import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 
 //курьера можно создать;
@@ -20,88 +16,80 @@ import static org.hamcrest.Matchers.*;
 
 public class CourierCreateTest {
 
-    @Before
-    public void setUp() {
-        RestAssured.baseURI = "https://qa-scooter.praktikum-services.ru/";
+    @Test
+    @DisplayName("Check status ok with correct create courier")
+    public void testOkMessageForCreateCourier() {
+        CourierClient courierClient = new CourierClient();
+        Response testOkMessageForCreateCourier =
+                courierClient.getResponse("create", new CourierClient().getJsonBody("correctCourier"));
+
+        testOkMessageForCreateCourier
+                .then()
+                .assertThat()
+                .body("ok", is(true))
+                .and()
+                .statusCode(201);
     }
 
     @Test
-    public void createCourierWithAllParams() {
-        File json = new File("src/test/resources/courier.json");
-        Response response = given()
-                .header("Content-Type", "application/json")
+    @DisplayName("Check error message when create two same courier")
+    public void testErrorMessageForCreateTwoSameCourier() {
+        CourierClient courierClient = new CourierClient();
+        Response createFirstCourier =
+                courierClient.getResponse("create", new CourierClient().getJsonBody("correctCourier"));
+
+        createFirstCourier
+                .then()
+                .assertThat()
+                .body("ok", is(true))
                 .and()
-                .body(json)
-                .when()
-                .post("/api/v1/courier");
-        response.then().assertThat().body("ok", equalTo(true)).and().statusCode(201);
+                .statusCode(201);
+
+        Response testErrorMessageForCreateTwoSameCourier =
+                courierClient.getResponse("create", new CourierClient().getJsonBody("correctCourier"));
+
+        testErrorMessageForCreateTwoSameCourier
+                .then()
+                .assertThat()
+                .body("message", is("Этот логин уже используется. Попробуйте другой."))
+                .and()
+                .statusCode(409);
     }
 
     @Test
-    public void createTwoSameCourier() {
-        File json = new File("src/test/resources/courier.json");
-        Response response = given()
-                .header("Content-Type", "application/json")
-                .and()
-                .body(json)
-                .when()
-                .post("/api/v1/courier");
-        response.then().assertThat().body("ok", equalTo(true)).and().statusCode(201);
+    @DisplayName("Check error message when create courier without variable 'login'")
+    public void testErrorMessageForCreateCourierWithoutLogin() {
+        CourierClient courierClient = new CourierClient();
+        Response testErrorMessageForCreateCourierWithoutLogin =
+                courierClient.getResponse("create", new CourierClient().getJsonBody("noLogin"));
 
-        Response response1 = given()
-                .header("Content-Type", "application/json")
+        testErrorMessageForCreateCourierWithoutLogin
+                .then()
+                .assertThat()
+                .body("message", is("Недостаточно данных для создания учетной записи"))
                 .and()
-                .body(json)
-                .when()
-                .post("/api/v1/courier");
-        response1.then().assertThat().body("message", equalTo("Этот логин уже используется. Попробуйте другой.")).and().statusCode(409);
+                .statusCode(400);
     }
 
     @Test
-    public void createCourierWithoutLogin() {
-        File json = new File("src/test/resources/courierWithoutLogin.json");
-        Response response = given()
-                .header("Content-Type", "application/json")
-                .and()
-                .body(json)
-                .when()
-                .post("/api/v1/courier");
-        response.then().assertThat().body("message", equalTo("Недостаточно данных для создания учетной записи")).and().statusCode(400);
-    }
+    @DisplayName("Check error message when create courier without variable 'password'")
+    public void testErrorMessageForCreateCourierWithoutPass() {
+        CourierClient courierClient = new CourierClient();
+        Response testErrorMessageForCreateCourierWithoutPass =
+                courierClient.getResponse("create", new CourierClient().getJsonBody("noPass"));
 
-    @Test
-    public void createCourierWithoutPass() {
-        File json = new File("src/test/resources/courierWithoutPass.json");
-        Response response = given()
-                .header("Content-Type", "application/json")
+        testErrorMessageForCreateCourierWithoutPass
+                .then()
+                .assertThat()
+                .body("message", is("Недостаточно данных для создания учетной записи"))
                 .and()
-                .body(json)
-                .when()
-                .post("/api/v1/courier");
-        response.then().assertThat().body("message", equalTo("Недостаточно данных для создания учетной записи")).and().statusCode(400);
+                .statusCode(400);
     }
 
     @After
-    public void getCourierIdAndDeleteCourier() {
-        File json = new File("src/test/resources/courier.json");
-        Response response = given()
-                .header("Content-Type", "application/json")
-                .and()
-                .body(json)
-                .when()
-                .post("/api/v1/courier/login");
-
-        if (response.getStatusCode() == 200) {
-            JsonPath jsonPath = new JsonPath(response.body().asString());
-            int id = jsonPath.get("id");
-
-            given()
-                    .header("Content-Type", "application/json")
-                    .and()
-                    .body(response.body().asString())
-                    .when()
-                    .delete("/api/v1/courier/" + id);
-        }
+    public void deleteCourierIfIdIsNotNull() {
+        CourierClient courierClient = new CourierClient();
+        courierClient.deleteCourierIfIdIsNotNull();
     }
 
 }

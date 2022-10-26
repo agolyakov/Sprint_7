@@ -1,6 +1,6 @@
-import io.restassured.RestAssured;
+import api.client.OrdersClient;
+import io.qameta.allure.junit4.DisplayName;
 
-import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 
 //можно указать один из цветов — BLACK или GREY;
@@ -9,7 +9,6 @@ import static org.hamcrest.Matchers.*;
 //тело ответа содержит track.
 
 import io.restassured.response.Response;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -45,7 +44,7 @@ public class OrderCreateTest {
         this.expected = expected;
     }
 
-    @Parameterized.Parameters
+    @Parameterized.Parameters(name = "Тестовые данные: {8}")
     public static Object[] getOrderData() {
         return new Object[][]{
                 {"Александр", "Голяков", "г. Нижний Новгород", "Горьковская", "8 800 555 35 35", 4, "2022-11-23",
@@ -60,23 +59,21 @@ public class OrderCreateTest {
         };
     }
 
-    @Before
-    public void setUp() {
-        RestAssured.baseURI = "https://qa-scooter.praktikum-services.ru/";
-    }
-
     @Test
-    public void checkOrderCreateWithParameters() {
-
+    @DisplayName("Check create order with params")
+    public void testOrderCreateWithParameters() {
         OrderData orderData = new OrderData(firstName, lastName, address, metroStation, phone, rentTime, deliveryDate,
                 comment, color);
-        Response response = given()
-                .header("Content-Type", "application/json")
+
+        OrdersClient ordersClient = new OrdersClient();
+        Response testOrderCreateWithParameters = ordersClient.getResponsePost(orderData);
+
+        testOrderCreateWithParameters
+                .then()
+                .assertThat()
+                .body("track", notNullValue())
                 .and()
-                .body(orderData)
-                .when()
-                .post("/api/v1/orders");
-        response.then().assertThat().body("track", notNullValue()).and().statusCode(expected);
+                .statusCode(expected);
     }
 
 }
